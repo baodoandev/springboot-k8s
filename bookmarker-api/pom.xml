@@ -149,7 +149,7 @@
 						</exclude>
 					</excludes>
 					<image>
-						<name>test/bookmarker-api</name>
+						<name>${docker.image.name:test/bookmarker-api}</name>
 					</image>
 				</configuration>
 			</plugin>
