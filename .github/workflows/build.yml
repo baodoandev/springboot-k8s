@@ -30,9 +30,22 @@ jobs:
       - if: ${{ github.ref == 'refs/heads/master' }}
         name: Build and Publish Docker Image
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          ./mvnw spring-boot:build-image -Ddocker.image.name=${{ secrets.DOCKER_USERNAME }}/bookmarker-api
-          IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "bookmarker-api" | head -n 1)
-          echo "Built image: $IMAGE_ID"
-          docker tag $IMAGE_ID ${{ secrets.DOCKER_USERNAME }}/bookmarker-api
-          docker push ${{ secrets.DOCKER_USERNAME }}/bookmarker-api
+          # Login to Docker Hub
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            
+          # Build without trying to set custom name
+          ./mvnw spring-boot:build-image
+            
+          # Get actual image name that was built
+          BUILT_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "bookmarker-api" | head -n 1)
+          echo "Built image: $BUILT_IMAGE"
+            
+          # Define target image name
+          TARGET_IMAGE="${{ secrets.DOCKER_USERNAME }}/bookmarker-api:latest"
+          echo "Target image: $TARGET_IMAGE"
+            
+          # Tag image with correct name
+          docker tag "$BUILT_IMAGE" "$TARGET_IMAGE"
+            
+          # Push the correctly tagged image
+          docker push "$TARGET_IMAGE"
